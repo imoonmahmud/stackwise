@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import select
+from sqlalchemy import select, or_
 
 from app.models.tool import Tool
 from app.schemas.tool import ToolCreate, ToolUpdate
@@ -29,9 +29,23 @@ def create_tool(db: Session, data: ToolCreate):
     return new_tool
 
 
-def get_tools(db: Session):
-    result = db.execute(select(Tool).order_by(Tool.name))
+def get_tools(db: Session, search: str|None = None):
+    query = select(Tool)
+
+    if search and search.strip():
+        search_term = search.strip()
+
+        query = query.where(
+            or_(
+                Tool.name.ilike(f"%{search_term}%"),
+                Tool.short_description.ilike(f"%{search_term}%")
+            )
+        )
+
+    query = query.order_by(Tool.name.asc())
+    result = db.execute(query)
     return result.scalars().all()
+
 
 def get_tool_by_slug(db: Session, slug: str):
     result = db.execute(select(Tool).where(Tool.slug == slug))

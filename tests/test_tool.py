@@ -1,3 +1,54 @@
+def test_health_check(client):
+    response = client.get("/health")
+    assert response.status_code == 200
+
+
+def test_create_tool_success(client):
+    response = client.post(
+        "/tools/",
+        json={
+            "name": "Docker",
+            "slug": "docker",
+            "short_description": "Containerization platform"
+        }
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert "id" in data
+    assert data["slug"] == "docker"
+    assert data["name"] == "Docker"
+
+
+def test_create_tool_duplicate_slug(client):
+    payload = {
+        "name": "Docker",
+        "slug": "docker",
+        "short_description": "Containerization platform"
+    }
+
+    res1 = client.post("/tools/", json=payload)
+    assert res1.status_code == 201
+
+    res2 = client.post("/tools/", json=payload)
+    assert res2.status_code == 409
+
+
+def test_create_tool_missing_slug(client):
+    response = client.post(
+        "/tools/",
+        json={
+            "name": "Docker",
+            "short_description": "Missing slug field"
+        }
+    )
+    assert response.status_code == 422
+
+
+def test_get_tool_not_found(client):
+    response = client.get("/tools/nope")
+    assert response.status_code == 404
+
+
 def test_get_tools_empty(client):
     res = client.get('/tools/')
     assert res.status_code == 200
@@ -132,3 +183,57 @@ def test_delete_tool_success(client):
 def test_delete_tool_not_found(client):
     delete_res = client.delete("/tools/9999")
     assert delete_res.status_code == 404
+
+
+def test_search_by_name(client):
+    client.post(
+        "/tools/",
+        json={"name": "PostgreSQL", "slug": "postgresql", "short_description": "Relational DB"}
+    )
+    client.post(
+        "/tools/",
+        json={"name": "Redis", "slug": "redis", "short_description": "In-memory datastore"}
+    )
+
+    res = client.get("/tools/?search=Postgre")
+    assert res.status_code == 200
+    results = res.json()
+    assert len(results) == 1
+    assert results[0]["name"] == "PostgreSQL"
+
+def test_search_case_insensitive(client):
+    client.post(
+        "/tools/",
+        json={"name": "Docker", "slug": "docker", "short_description": "Container platform"}
+    )
+
+    res = client.get("/tools/?search=docKER")
+    assert res.status_code == 200
+    results = res.json()
+    assert len(results) == 1
+    assert results[0]['name'] == 'Docker'
+
+def test_search_no_match(client):
+    client.post(
+        "/tools/",
+        json={"name": "FastAPI", "slug": "fastapi", "short_description": "Python web framework"}
+    )
+
+    response = client.get("/tools/?search=nonexistentterm")
+    assert response.status_code == 200
+    assert response.json() == []
+
+def test_search_sql_injection_safe(client):
+    client.post(
+        "/tools/",
+        json={"name": "SafeTool", "slug": "safetool", "short_description": "Normal tool"}
+    )
+
+    injection_payload = "' OR '1'='1'; DROP TABLE tools; --"
+    response = client.get(f"/tools/?search={injection_payload}")
+    assert response.status_code == 200
+
+    check_response = client.get("/tools/")
+    assert check_response.status_code == 200
+    assert len(check_response.json()) == 1
+    assert check_response.json()[0]["name"] == "SafeTool"

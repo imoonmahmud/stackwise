@@ -1,0 +1,12 @@
+[
+  {"name": "n8n", "slug": "n8n", "short_description": "Open-source workflow automation tool that connects apps and APIs"},
+  {"name": "Make", "slug": "make", "short_description": "Visual automation platform for connecting apps and building workflows"},
+  {"name": "Zapier", "slug": "zapier", "short_description": "No-code automation that links thousands of apps with simple triggers"},
+  {"name": "ChatGPT", "slug": "chatgpt", "short_description": "AI assistant for writing, answering questions, and analysis"},
+  {"name": "Claude", "slug": "claude", "short_description": "AI assistant for writing, coding, and working with long documents"},
+  {"name": "Perplexity", "slug": "perplexity", "short_description": "AI search engine that answers questions with sources"},
+  {"name": "Notion", "slug": "notion", "short_description": "Workspace for notes, docs, and project management"},
+  {"name": "HubSpot", "slug": "hubspot", "short_description": "CRM for managing leads, contacts, and sales follow-up"},
+  {"name": "Airtable", "slug": "airtable", "short_description": "Spreadsheet-style database for organizing business data"},
+  {"name": "Canva", "slug": "canva", "short_description": "Online design tool for social posts, presentations, and graphics"}
+]
