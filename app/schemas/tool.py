@@ -26,7 +26,7 @@ class ToolUpdate(BaseModel):
     @field_validator('name', 'slug', 'short_description', mode='before')
     @classmethod
     def empty_string_to_none(cls, v:Any):
-        if v == '' or v == 'string':
+        if v == '' or v == 'string' or None:
             return None
         return v
         
