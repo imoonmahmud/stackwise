@@ -5,19 +5,17 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.schemas.tool import ToolCreate, ToolRead
-from app.services.tool_service import create_tool, DuplicateSlugError
+from app.services.tool_service import (
+    create_tool, 
+    DuplicateSlugError, 
+    get_tools, 
+    get_tool_by_slug
+)
 
 router = APIRouter(prefix="/tools", tags=["tools"])
 
-@router.post(
-    "/",
-    response_model=ToolRead,
-    status_code=status.HTTP_201_CREATED
-)
-def create_tool_endpoint(
-    db: Annotated[Session, Depends(get_db)],
-    data: ToolCreate
-):
+@router.post("/", response_model=ToolRead, status_code=status.HTTP_201_CREATED)
+def create_tool_endpoint(db: Annotated[Session, Depends(get_db)], data: ToolCreate):
     try:
         return create_tool(db, data)
     except DuplicateSlugError:
@@ -25,3 +23,12 @@ def create_tool_endpoint(
             status_code=status.HTTP_409_CONFLICT,
             detail="A tool with this slug already exists"
         )
+
+
+@router.get("/", response_model=list[ToolRead])
+def get_tools_endpoint(db: Annotated[Session, Depends(get_db)]):
+    return get_tools(db=db)
+
+@router.get("/{slug}", response_model=ToolRead)
+def get_tool_by_slug_endpoint(slug: str, db: Annotated[Session, Depends(get_db)]):
+    return get_tool_by_slug(db=db, slug=slug)
