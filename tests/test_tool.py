@@ -237,3 +237,19 @@ def test_search_sql_injection_safe(client):
     assert check_response.status_code == 200
     assert len(check_response.json()) == 1
     assert check_response.json()[0]["name"] == "SafeTool"
+
+
+def test_search_percent_is_literal(client):
+    client.post(
+        "/tools/",
+        json={"name": "n8n", "slug": "n8n", "short_description": "Workflow automation"}
+    )
+    client.post(
+        "/tools/",
+        json={"name": "Make", "slug": "make", "short_description": "Visual automation"}
+    )
+
+    res = client.get('/tools/?search=%25')
+
+    assert res.status_code == 200
+    assert res.json() == []

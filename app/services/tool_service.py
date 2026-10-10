@@ -37,8 +37,8 @@ def get_tools(db: Session, search: str|None = None):
 
         query = query.where(
             or_(
-                Tool.name.ilike(f"%{search_term}%"),
-                Tool.short_description.ilike(f"%{search_term}%")
+                Tool.name.icontains(search_term, autoescape=True),
+                Tool.short_description.icontains(search_term, autoescape=True)
             )
         )
 
