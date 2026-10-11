@@ -20,8 +20,20 @@ def create_tool_endpoint(db: Annotated[Session, Depends(get_db)], data: ToolCrea
     return create_tool(db, data)
 
 @router.get("/", response_model=list[ToolRead])
-def get_tools_endpoint(db: Annotated[Session, Depends(get_db)], search: str | None = None):
-    return get_tools(db=db, search=search)
+def get_tools_endpoint(
+    db: Annotated[Session, Depends(get_db)], 
+    search: str | None = None,
+    free_plan: bool | None = None,
+    api_available: bool | None = None,
+    pricing_model: str | None = None
+) -> list[ToolRead]:
+    return get_tools(
+        db=db, 
+        search=search,
+        free_plan=free_plan,
+        api_available=api_available,
+        pricing_model=pricing_model
+    )
 
 @router.get("/{slug}", response_model=ToolRead)
 def get_tool_by_slug_endpoint(slug: str, db: Annotated[Session, Depends(get_db)]):

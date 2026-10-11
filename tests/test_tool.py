@@ -253,3 +253,72 @@ def test_search_percent_is_literal(client):
 
     assert res.status_code == 200
     assert res.json() == []
+
+
+def test_filter_free_plan_and_api(client):
+    client.post("/tools/", json={"name": "n8n", "slug": "n8n", "has_free_plan": True, "api_available": True, "short_description": "Auto tool"})
+    client.post("/tools/", json={"name": "Zapier", "slug": "zapier", "has_free_plan": True, "api_available": True, "short_description": "Auto tool"})
+    client.post("/tools/", json={"name": "Make", "slug": "make", "has_free_plan": True, "api_available": False, "short_description": "Auto tool"})
+
+    response = client.get("/tools/?free_plan=true&api_available=true")
+    assert response.status_code == 200
+    data = response.json()
+    names = [t["name"] for t in data]
+    assert "n8n" in names
+    assert "Zapier" in names
+    assert "Make" not in names
+
+
+def test_filter_free_plan_false(client):
+    client.post("/tools/", json={"name": "ToolFree", "slug": "toolfree", "short_description": "test", "has_free_plan": True})
+    client.post("/tools/", json={"name": "ToolPaid", "slug": "toolpaid", "short_description": "test", "has_free_plan": False})
+
+    response = client.get("/tools/?free_plan=false")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["name"] == "ToolPaid"
+
+def test_search_and_filters_combined(client):
+    client.post("/tools/", json={"name": "n8n", "slug": "n8n", "short_description": "Workflow automation", "has_free_plan": True, "api_available": True})
+    client.post("/tools/", json={"name": "ManualTool", "slug": "manual", "short_description": "Workflow automation", "has_free_plan": True, "api_available": False})
+
+    response = client.get("/tools/?search=automation&free_plan=true&api_available=true")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["name"] == "n8n"
+
+
+def test_filter_invalid_boolean_raises_422(client):
+    response = client.get("/tools/?free_plan=maybe")
+    assert response.status_code == 422
+
+
+def test_filter_pricing_model(client):
+    client.post(
+        "/tools/",
+        json={"name": "Notion", "slug": "notion", "short_description": 'test', "pricing_model": "freemium"}
+    )
+    client.post(
+        "/tools/",
+        json={"name": "Linear", "slug": "linear", "pricing_model": "paid"}
+    )
+
+    response = client.get("/tools/?pricing_model=freemium")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["name"] == "Notion"
+    assert data[0]["pricing_model"] == "freemium"
+
+
+def test_filter_pricing_model_none(client):
+    client.post(
+        "/tools/",
+        json={"name": "Slack", "slug": "slack", "pricing_model": "freemium"}
+    )
+
+    response = client.get("/tools/?pricing_model=paid")
+    assert response.status_code == 200
+    assert response.json() == []

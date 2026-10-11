@@ -13,7 +13,10 @@ def create_tool(db: Session, data: ToolCreate):
     new_tool = Tool(
         name=data.name,
         slug=data.slug,
-        short_description=data.short_description
+        short_description=data.short_description,
+        pricing_model=data.pricing_model,
+        has_free_plan=data.has_free_plan,
+        api_available=data.api_available,
     )
     db.add(new_tool)
     try:
@@ -29,7 +32,14 @@ def create_tool(db: Session, data: ToolCreate):
     return new_tool
 
 
-def get_tools(db: Session, search: str|None = None):
+def get_tools(
+    db: Session, 
+    search: str | None = None,
+    free_plan: str | None = None,
+    api_available: bool | None = None,
+    pricing_model: bool | None = None
+
+) -> list[Tool]:
     query = select(Tool)
 
     if search and search.strip():
@@ -41,6 +51,13 @@ def get_tools(db: Session, search: str|None = None):
                 Tool.short_description.icontains(search_term, autoescape=True)
             )
         )
+
+    if free_plan is not None:
+        query = query.where(Tool.has_free_plan == free_plan)
+    if api_available is not None:
+        query = query.where(Tool.api_available == api_available)
+    if pricing_model is not None:
+        query = query.where(Tool.pricing_model == pricing_model)
 
     query = query.order_by(Tool.name.asc())
     result = db.execute(query)

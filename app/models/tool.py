@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import Integer, String, DateTime
+from sqlalchemy import Integer, String, DateTime, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -16,3 +16,7 @@ class Tool(Base):
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC)
     )
+
+    pricing_model: Mapped[str] = mapped_column(String(30), nullable=True)
+    has_free_plan: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    api_available: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
