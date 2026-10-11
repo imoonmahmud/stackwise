@@ -360,3 +360,125 @@ def test_get_categories_sorted(client):
     
     names = [c["name"] for c in data]
     assert names == ["API", "Automation", "Database"]
+
+
+def test_create_tool_with_categories(client):
+    cat1 = client.post("/categories/", json={"name": "Automation", "slug": "automation"}).json()
+    cat2 = client.post("/categories/", json={"name": "AI", "slug": "ai"}).json()
+
+    response = client.post(
+        "/tools/",
+        json={
+            "name": "n8n",
+            "slug": "n8n",
+            "short_description": "Workflow tool",
+            "category_ids": [cat1["id"], cat2["id"]]
+        }
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert len(data["categories"]) == 2
+    category_names = {c["name"] for c in data["categories"]}
+    assert category_names == {"Automation", "AI"}
+
+
+def test_create_tool_unknown_category(client):
+    response = client.post(
+        "/tools/",
+        json={
+            "name": "GhostTool",
+            "slug": "ghost",
+            "category_ids": [9999]
+        }
+    )
+    assert response.status_code == 404
+
+    get_response = client.get("/tools/")
+    assert get_response.status_code == 200
+    assert get_response.json() == []
+
+
+def test_update_tool_replace_categories(client):
+    cat1 = client.post("/categories/", json={"name": "DevOps", "slug": "devops"}).json()
+    cat2 = client.post("/categories/", json={"name": "Cloud", "slug": "cloud"}).json()
+
+    tool_res = client.post(
+        "/tools/",
+        json={"name": "Docker", "slug": "docker", "category_ids": [cat1["id"]]}
+    ).json()
+    tool_id = tool_res["id"]
+
+    response = client.patch(
+        f"/tools/{tool_id}",
+        json={"category_ids": [cat2["id"]]}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["categories"]) == 1
+    assert data["categories"][0]["name"] == "Cloud"
+
+
+def test_update_tool_keep_categories(client):
+    cat = client.post("/categories/", json={"name": "Security", "slug": "security"}).json()
+    tool_res = client.post(
+        "/tools/",
+        json={"name": "Vault", "slug": "vault", "category_ids": [cat["id"]]}
+    ).json()
+    tool_id = tool_res["id"]
+
+    response = client.patch(
+        f"/tools/{tool_id}",
+        json={"short_description": "Updated description"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["categories"]) == 1
+    assert data["categories"][0]["name"] == "Security"
+
+
+def test_update_tool_clear_categories(client):
+    cat = client.post("/categories/", json={"name": "Monitoring", "slug": "monitoring"}).json()
+    tool_res = client.post(
+        "/tools/",
+        json={"name": "Grafana", "slug": "grafana", "category_ids": [cat["id"]]}
+    ).json()
+    tool_id = tool_res["id"]
+
+    response = client.patch(
+        f"/tools/{tool_id}",
+        json={"category_ids": []}
+    )
+    assert response.status_code == 200
+    assert response.json()["categories"] == []
+
+
+def test_update_tool_null_categories(client):
+    tool_res = client.post(
+        "/tools/",
+        json={"name": "NullTest", "slug": "null-test"}
+    ).json()
+    tool_id = tool_res["id"]
+
+    response = client.patch(
+        f"/tools/{tool_id}",
+        json={"category_ids": None}
+    )
+    assert response.status_code == 422
+
+
+
+def test_delete_tool_removes_links(client):
+    cat = client.post("/categories/", json={"name": "Temporary", "slug": "temp"}).json()
+    tool_res = client.post(
+        "/tools/",
+        json={"name": "TempTool", "slug": "temp-tool", "category_ids": [cat["id"]]}
+    ).json()
+    tool_id = tool_res["id"]
+
+    del_response = client.delete(f"/tools/{tool_id}")
+    assert del_response.status_code == 204
+
+    cat_response = client.get("/categories/")
+    assert cat_response.status_code == 200
+    categories = cat_response.json()
+    assert any(c["id"] == cat["id"] for c in categories)
