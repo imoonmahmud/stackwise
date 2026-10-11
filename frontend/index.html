@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stackwise - Find the right tools for the work you need to do</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <a href="index.html" class="logo">Stackwise</a>
+        <ul class="nav-links">
+            <li><a href="#">Explore</a></li>
+            <li><a href="#">Solutions</a></li>
+            <li><a href="#">Submit a tool</a></li>
+        </ul>
+    </header>
+
+    <div class="hero-section">
+        <div class="hero-tag">AI tools • Automation • Business software</div>
+        <h1>Find the right tools for the work you need to do.</h1>
+        <p>Compare AI and automation software by use case, pricing, integrations and features. Built for people who want a useful stack—not another endless list.</p>
+        
+        <div class="search-bar-wrapper">
+            <input type="search" id="search" placeholder="Search tools, categories, or use cases...">
+            <button class="search-btn">Search</button>
+        </div>
+    </div>
+
+    <div class="controls-bar">
+        <div class="checkbox-filters">
+            <label><input type="checkbox" id="free-plan"> Free plan</label>
+            <label><input type="checkbox" id="api"> Has API</label>
+        </div>
+        <div class="select-wrapper">
+            <select id="pricing">
+                <option value="">All pricing models</option>
+                <option value="free">Free</option>
+                <option value="freemium">Freemium</option>
+                <option value="paid">Paid</option>
+                <option value="open_source">Open Source</option>
+            </select>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <h2 class="section-title">Popular tools</h2>
+        <p id="status"></p>
+        <div id="tools-grid"></div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/home.js"></script>
+</body>
+</html>
