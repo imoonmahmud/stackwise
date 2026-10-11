@@ -1,8 +1,10 @@
 from datetime import UTC, datetime
 
 from sqlalchemy import Integer, String, DateTime, Boolean
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.models.category import Category
+from app.models.tool_category import tool_categories
 from app.database import Base
 
 class Tool(Base):
@@ -17,6 +19,10 @@ class Tool(Base):
         default=lambda: datetime.now(UTC)
     )
 
-    pricing_model: Mapped[str] = mapped_column(String(30), nullable=True)
+    pricing_model: Mapped[str | None] = mapped_column(String(30), nullable=True)
     has_free_plan: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     api_available: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    categories: Mapped[list["Category"]] = relationship(
+    "Category", secondary=tool_categories, back_populates="tools"
+    )

@@ -322,3 +322,41 @@ def test_filter_pricing_model_none(client):
     response = client.get("/tools/?pricing_model=paid")
     assert response.status_code == 200
     assert response.json() == []
+
+
+def test_create_category_success(client):
+    response = client.post(
+        "/categories/",
+        json={"name": "Automation", "slug": "automation", "description": "Workflow tools"}
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["name"] == "Automation"
+    assert data["slug"] == "automation"
+    assert "id" in data
+
+
+def test_create_category_duplicate_name(client):
+    client.post(
+        "/categories/",
+        json={"name": "AI", "slug": "ai", "description": "Artificial Intelligence"}
+    )
+
+    response = client.post(
+        "/categories/",
+        json={"name": "AI", "slug": "ai-duplicate", "description": "Duplicate test"}
+    )
+    assert response.status_code == 409
+
+
+def test_get_categories_sorted(client):
+    client.post("/categories/", json={"name": "Database", "slug": "database"})
+    client.post("/categories/", json={"name": "API", "slug": "api"})
+    client.post("/categories/", json={"name": "Automation", "slug": "automation"})
+
+    response = client.get("/categories/")
+    assert response.status_code == 200
+    data = response.json()
+    
+    names = [c["name"] for c in data]
+    assert names == ["API", "Automation", "Database"]

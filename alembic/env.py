@@ -2,6 +2,8 @@ import os
 from dotenv import load_dotenv
 from app.database import Base
 from app.models.tool import Tool
+from app.models.category import Category
+from app.models.tool_category import tool_categories
 
 from logging.config import fileConfig
 
