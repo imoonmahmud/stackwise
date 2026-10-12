@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -26,7 +26,8 @@ def get_tools_endpoint(
     free_plan: bool | None = None,
     api_available: bool | None = None,
     pricing_model: str | None = None,
-    category: str | None = None
+    category: str | None = None,
+    feature: list[str] | None = Query(default=None)
 ) -> list[ToolRead]:
     return get_tools(
         db=db, 
@@ -34,7 +35,8 @@ def get_tools_endpoint(
         free_plan=free_plan,
         api_available=api_available,
         pricing_model=pricing_model,
-        category=category
+        category=category,
+        feature=feature
     )
 
 @router.get("/{slug}", response_model=ToolRead)

@@ -5,6 +5,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.category import Category
 from app.models.tool_category import tool_categories
+from app.models.feature import Feature
+from app.models.tool_feature import tool_features
 from app.database import Base
 
 class Tool(Base):
@@ -23,6 +25,10 @@ class Tool(Base):
     has_free_plan: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     api_available: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    categories: Mapped[list["Category"]] = relationship(
-    "Category", secondary=tool_categories, back_populates="tools"
-    )
+    categories: Mapped[list["Category"]] = relationship("Category", secondary=tool_categories, back_populates="tools")
+
+    features = relationship("Feature", secondary=tool_features, back_populates="tools")
+
+
+
+
