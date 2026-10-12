@@ -482,3 +482,101 @@ def test_delete_tool_removes_links(client):
     assert cat_response.status_code == 200
     categories = cat_response.json()
     assert any(c["id"] == cat["id"] for c in categories)
+
+
+def test_filter_tools_by_category(client):
+    cat = client.post("/categories/", json={"name": "Automation", "slug": "automation"}).json()
+    client.post(
+        "/tools/",
+        json={"name": "n8n", "slug": "n8n", "category_ids": [cat["id"]]}
+    )
+    client.post(
+        "/tools/",
+        json={"name": "Unrelated Tool", "slug": "unrelated", "category_ids": []}
+    )
+
+    response = client.get("/tools/?category=automation")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["slug"] == "n8n"
+
+
+def test_filter_tools_by_unknown_category(client):
+    response = client.get("/tools/?category=nonexistent")
+    assert response.status_code == 200
+    assert response.json() == []
+
+def test_get_category_by_slug_success(client):
+    client.post("/categories/", json={"name": "Design", "slug": "design"})
+
+    response = client.get("/categories/design")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "Design"
+    assert data["slug"] == "design"
+
+def test_get_category_by_slug_not_found(client):
+    response = client.get("/categories/nonexistent-category")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Category not found"
+
+def test_category_tools_success(client):
+    cat = client.post("/categories/", json={"name": "DevOps", "slug": "devops"}).json()
+    client.post(
+        "/tools/",
+        json={"name": "Docker", "slug": "docker", "category_ids": [cat["id"]]}
+    )
+
+    response = client.get("/categories/devops/tools")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["name"] == "Docker"
+
+def test_category_tools_unknown_category(client):
+    response = client.get("/categories/nonexistent-category/tools")
+    assert response.status_code == 404
+
+
+def test_category_tools_with_filters(client):
+    cat = client.post("/categories/", json={"name": "AI", "slug": "ai"}).json()
+    
+    client.post(
+        "/tools/",
+        json={"name": "ChatGPT Free", "slug": "chatgpt-free", "has_free_plan": True, "category_ids": [cat["id"]]}
+    )
+    client.post(
+        "/tools/",
+        json={"name": "Enterprise AI", "slug": "enterprise-ai", "has_free_plan": False, "category_ids": [cat["id"]]}
+    )
+    response = client.get("/categories/ai/tools?free_plan=true")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["slug"] == "chatgpt-free"
+
+
+def test_category_with_no_tools(client):
+    client.post("/categories/", json={"name": "Empty Category", "slug": "empty-cat"})
+
+    response = client.get("/categories/empty-cat/tools")
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_tool_in_two_categories_not_duplicated(client):
+    cat1 = client.post("/categories/", json={"name": "Cat 1", "slug": "cat-1"}).json()
+    cat2 = client.post("/categories/", json={"name": "Cat 2", "slug": "cat-2"}).json()
+
+    client.post(
+        "/tools/",
+        json={"name": "MultiCat Tool", "slug": "multicat-tool", "category_ids": [cat1["id"], cat2["id"]]}
+    )
+
+    response = client.get("/tools/")
+    assert response.status_code == 200
+    data = response.json()
+    
+    matching_tools = [t for t in data if t["slug"] == "multicat-tool"]
+    assert len(matching_tools) == 1

@@ -25,14 +25,16 @@ def get_tools_endpoint(
     search: str | None = None,
     free_plan: bool | None = None,
     api_available: bool | None = None,
-    pricing_model: str | None = None
+    pricing_model: str | None = None,
+    category: str | None = None
 ) -> list[ToolRead]:
     return get_tools(
         db=db, 
         search=search,
         free_plan=free_plan,
         api_available=api_available,
-        pricing_model=pricing_model
+        pricing_model=pricing_model,
+        category=category
     )
 
 @router.get("/{slug}", response_model=ToolRead)

@@ -50,7 +50,8 @@ def get_tools(
     search: str | None = None,
     free_plan: str | None = None,
     api_available: bool | None = None,
-    pricing_model: bool | None = None
+    pricing_model: bool | None = None,
+    category: str | None = None
 ) -> list[Tool]:
     query = select(Tool).options(selectinload(Tool.categories))
 
@@ -70,9 +71,12 @@ def get_tools(
     if pricing_model is not None:
         query = query.where(Tool.pricing_model == pricing_model)
 
+    if category is not None:
+        query = query.where(Tool.categories.any(Category.slug == category))
+
     query = query.order_by(Tool.name.asc())
     result = db.execute(query)
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 def get_tool_by_slug(db: Session, slug: str):

@@ -12,7 +12,6 @@ def get_categories(db: Session):
     return list(result.scalars().all())
 
 
-
 def create_category(db: Session, category_in: CategoryCreate):
     existing = db.execute(
         select(Category).where(
@@ -38,4 +37,12 @@ def create_category(db: Session, category_in: CategoryCreate):
         )
     return db_category
 
-
+def get_category_by_slug(db: Session, slug: str):
+    query = select(Category).where(Category.slug == slug)
+    category = db.execute(query).scalars().first()
+    if not category:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Category not found"
+        )
+    return category
