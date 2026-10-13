@@ -7,6 +7,7 @@ from app.models.category import Category
 from app.models.tool_category import tool_categories
 from app.models.feature import Feature
 from app.models.tool_feature import tool_features
+from app.models.pricing_plan import PricingPlan
 from app.database import Base
 
 class Tool(Base):
@@ -28,6 +29,13 @@ class Tool(Base):
     categories: Mapped[list["Category"]] = relationship("Category", secondary=tool_categories, back_populates="tools")
 
     features = relationship("Feature", secondary=tool_features, back_populates="tools")
+
+    pricing_plans = relationship(
+        "PricingPlan", 
+        back_populates="tool", 
+        cascade="all, delete-orphan", 
+        order_by=PricingPlan.price
+    )
 
 
 

@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.routes import tools
 from app.routes import categories
 from app.routes import features
+from app.routes import pricing_plans
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -14,6 +15,7 @@ def health_check():
 app.include_router(tools.router)
 app.include_router(categories.router)
 app.include_router(features.router)
+app.include_router(pricing_plans.router)
 
 
 

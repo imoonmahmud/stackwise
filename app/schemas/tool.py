@@ -4,6 +4,7 @@ from typing import Any
 
 from app.schemas.category import CategoryRead
 from app.schemas.feature import FeatureRead
+from app.schemas.pricing_plan import PlanRead
 
 class ToolCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
@@ -28,6 +29,7 @@ class ToolRead(BaseModel):
     api_available: bool | None = Field(default=None)
     categories: list[CategoryRead] = []
     features: list[FeatureRead] = []
+    pricing_plans: list[PlanRead] = []
 
     model_config = ConfigDict(from_attributes=True)
 

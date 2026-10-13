@@ -1,5 +1,3 @@
-from typing import Annotated
-
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.exc import IntegrityError
@@ -69,7 +67,8 @@ def get_tools(
 ) -> list[Tool]:
     query = select(Tool).options(
         selectinload(Tool.categories),
-        selectinload(Tool.features)
+        selectinload(Tool.features),
+        selectinload(Tool.pricing_plans)
         )
     if search and search.strip():
         search_term = search.strip()
