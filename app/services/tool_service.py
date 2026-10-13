@@ -181,4 +181,11 @@ def delete_tool(db: Session, tool_id: int):
         )
 
     db.delete(tool)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Connot delete tool because it is used in one or more solution steps"
+        )
