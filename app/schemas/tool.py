@@ -17,7 +17,6 @@ class ToolCreate(BaseModel):
     feature_ids: list[int] = Field(default_factory=list)
 
 
-
 class ToolRead(BaseModel):
     id: int
     name: str
@@ -56,5 +55,14 @@ class ToolUpdate(BaseModel):
         if v is None:
             raise ValueError("feature_ids cannot be null")
         return v
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ToolList(BaseModel):
+    items: list[ToolRead]
+    total: int
+    limit: int
+    offset: int
 
     model_config = ConfigDict(from_attributes=True)

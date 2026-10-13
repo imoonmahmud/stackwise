@@ -1,12 +1,15 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func, desc, asc
+from typing import Literal
+from decimal import Decimal
 
 from app.models.tool import Tool
 from app.schemas.tool import ToolCreate, ToolUpdate
 from app.models.category import Category
 from app.models.feature import Feature
+from app.models.pricing_plan import PricingPlan
 
 def _get_categories_or_404(db: Session, category_id: list[int]):
     unique_ids = set(category_id)
@@ -25,11 +28,12 @@ def _get_categories_or_404(db: Session, category_id: list[int]):
     return list(categories)
 
 def _get_features_or_404(db: Session, feature_ids: list[int]):
-    if not feature_ids:
+    unique_ids = set(feature_ids)
+    if not unique_ids:
         return []
-    query = select(Feature).where(Feature.id.in_(feature_ids))
+    query = select(Feature).where(Feature.id.in_(unique_ids))
     features = db.execute(query).scalars().all()
-    if len(features) != len(feature_ids):
+    if len(features) != len(unique_ids):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="One or more feature IDs not found"
@@ -59,17 +63,22 @@ def create_tool(db: Session, tool_in: ToolCreate):
 def get_tools(
     db: Session, 
     search: str | None = None,
-    free_plan: str | None = None,
+    free_plan: bool | None = None,
     api_available: bool | None = None,
-    pricing_model: bool | None = None,
+    pricing_model: str | None = None,
     category: str | None = None,
-    feature: list[str] | None = None
-) -> list[Tool]:
+    feature: list[str] | None = None,
+    limit: int = 20,
+    offset: int = 0,
+    sort: Literal['name', '-name', 'newest'] = 'name',
+    max_price: Decimal | None = None
+) -> dict:
     query = select(Tool).options(
         selectinload(Tool.categories),
         selectinload(Tool.features),
         selectinload(Tool.pricing_plans)
         )
+    
     if search and search.strip():
         search_term = search.strip()
         query = query.where(
@@ -84,25 +93,42 @@ def get_tools(
         query = query.where(Tool.api_available == api_available)
     if pricing_model is not None:
         query = query.where(Tool.pricing_model == pricing_model)
-
     if category is not None:
         query = query.where(Tool.categories.any(Category.slug == category))
-
     if feature:
         for slug in feature:
             query = query.where(Tool.features.any(Feature.slug == slug))
+    if max_price is not None:
+        query = query.where(Tool.pricing_plans.any(PricingPlan.price <= max_price))
 
-    query = query.order_by(Tool.name.asc())
-    result = db.execute(query)
-    return list(result.scalars().all())
+    total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
+
+    if sort == "name":
+        query = query.order_by(asc(Tool.name), asc(Tool.id))
+    elif sort == "-name":
+        query = query.order_by(desc(Tool.name), asc(Tool.id))
+    elif sort == "newest":
+        query = query.order_by(desc(Tool.created_at), desc(Tool.id))
+
+    query = query.limit(limit).offset(offset)
+    items = db.execute(query).scalars().all()
+    
+    return {
+        "items": items,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
 
 
 def get_tool_by_slug(db: Session, slug: str):
-    tool = db.execute(
-        select(Tool).where(Tool.slug == slug)
-        .options(selectinload(Tool.categories))
-    ).scalars().first()
+    query = select(Tool).options(
+        selectinload(Tool.categories),
+        selectinload(Tool.features),
+        selectinload(Tool.pricing_plans)
+    ).where(Tool.slug == slug)
 
+    tool = db.execute(query).scalars().first()
     if not tool:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -136,6 +162,7 @@ def update_tool(db: Session, tool_id: int, tool_in: ToolUpdate):
     try:
         db.commit()
     except IntegrityError:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="A tool with this slug already exists"

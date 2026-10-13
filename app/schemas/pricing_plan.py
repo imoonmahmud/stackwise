@@ -1,6 +1,7 @@
 from decimal import Decimal
-from typing import Literal
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Literal, Any
+from pydantic import BaseModel, Field, ConfigDict, field_validator
+
 
 class PlanCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
@@ -17,6 +18,13 @@ class PlanUpdate(BaseModel):
     currency: str | None = Field(default=None, min_length=3, max_length=3)
     is_free: bool | None = None
     description: str | None = None
+
+    @field_validator("name", "currency", "is_free", mode="before")
+    @classmethod
+    def reject_null_for_required_fields(cls, value: Any, info) -> Any:
+        if value is None:
+            raise ValueError(f"{info.field_name} cannot be null")
+        return value
 
 class PlanRead(BaseModel):
     id: int

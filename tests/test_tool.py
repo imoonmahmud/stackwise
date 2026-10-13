@@ -1,3 +1,5 @@
+# tests/test_tool.py
+
 def test_health_check(client):
     response = client.get("/health")
     assert response.status_code == 200
@@ -52,7 +54,8 @@ def test_get_tool_not_found(client):
 def test_get_tools_empty(client):
     res = client.get('/tools/')
     assert res.status_code == 200
-    assert res.json() == []
+    assert res.json()["items"] == []
+
 
 def test_get_tools_sorted(client):
     client.post(
@@ -76,7 +79,7 @@ def test_get_tools_sorted(client):
     res = client.get('/tools/')
     assert res.status_code == 200
 
-    tools = res.json()
+    tools = res.json()["items"]
     assert len(tools) == 2
 
     assert tools[0]['name'] == 'Make'
@@ -97,6 +100,7 @@ def test_get_tool_slug_success(client):
     get_res = client.get('tools/github')
     assert get_res.status_code == 200
     assert get_res.json()['name'] == 'GitHub'
+
 
 def test_update_tool_partial(client):
     create_res = client.post(
@@ -156,12 +160,14 @@ def test_update_tool_duplicate_slug(client):
 
     assert patch_res.status_code == 409
 
+
 def test_update_tool_not_found(client):
     patch_res = client.patch(
         "/tools/9999",
         json={"name": "Ghost Tool"}
     )
     assert patch_res.status_code == 404
+
 
 def test_delete_tool_success(client):
     create_res = client.post(
@@ -180,6 +186,7 @@ def test_delete_tool_success(client):
     get_res = client.get("/tools/vercel")
     assert get_res.status_code == 404
 
+
 def test_delete_tool_not_found(client):
     delete_res = client.delete("/tools/9999")
     assert delete_res.status_code == 404
@@ -197,9 +204,10 @@ def test_search_by_name(client):
 
     res = client.get("/tools/?search=Postgre")
     assert res.status_code == 200
-    results = res.json()
+    results = res.json()["items"]
     assert len(results) == 1
     assert results[0]["name"] == "PostgreSQL"
+
 
 def test_search_case_insensitive(client):
     client.post(
@@ -209,9 +217,10 @@ def test_search_case_insensitive(client):
 
     res = client.get("/tools/?search=docKER")
     assert res.status_code == 200
-    results = res.json()
+    results = res.json()["items"]
     assert len(results) == 1
     assert results[0]['name'] == 'Docker'
+
 
 def test_search_no_match(client):
     client.post(
@@ -221,7 +230,8 @@ def test_search_no_match(client):
 
     response = client.get("/tools/?search=nonexistentterm")
     assert response.status_code == 200
-    assert response.json() == []
+    assert response.json()["items"] == []
+
 
 def test_search_sql_injection_safe(client):
     client.post(
@@ -235,8 +245,8 @@ def test_search_sql_injection_safe(client):
 
     check_response = client.get("/tools/")
     assert check_response.status_code == 200
-    assert len(check_response.json()) == 1
-    assert check_response.json()[0]["name"] == "SafeTool"
+    assert len(check_response.json()["items"]) == 1
+    assert check_response.json()["items"][0]["name"] == "SafeTool"
 
 
 def test_search_percent_is_literal(client):
@@ -252,7 +262,7 @@ def test_search_percent_is_literal(client):
     res = client.get('/tools/?search=%25')
 
     assert res.status_code == 200
-    assert res.json() == []
+    assert res.json()["items"] == []
 
 
 def test_filter_free_plan_and_api(client):
@@ -262,7 +272,7 @@ def test_filter_free_plan_and_api(client):
 
     response = client.get("/tools/?free_plan=true&api_available=true")
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["items"]
     names = [t["name"] for t in data]
     assert "n8n" in names
     assert "Zapier" in names
@@ -275,9 +285,10 @@ def test_filter_free_plan_false(client):
 
     response = client.get("/tools/?free_plan=false")
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["items"]
     assert len(data) == 1
     assert data[0]["name"] == "ToolPaid"
+
 
 def test_search_and_filters_combined(client):
     client.post("/tools/", json={"name": "n8n", "slug": "n8n", "short_description": "Workflow automation", "has_free_plan": True, "api_available": True})
@@ -285,7 +296,7 @@ def test_search_and_filters_combined(client):
 
     response = client.get("/tools/?search=automation&free_plan=true&api_available=true")
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["items"]
     assert len(data) == 1
     assert data[0]["name"] == "n8n"
 
@@ -307,7 +318,7 @@ def test_filter_pricing_model(client):
 
     response = client.get("/tools/?pricing_model=freemium")
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["items"]
     assert len(data) == 1
     assert data[0]["name"] == "Notion"
     assert data[0]["pricing_model"] == "freemium"
@@ -321,7 +332,7 @@ def test_filter_pricing_model_none(client):
 
     response = client.get("/tools/?pricing_model=paid")
     assert response.status_code == 200
-    assert response.json() == []
+    assert response.json()["items"] == []
 
 
 def test_create_category_success(client):
@@ -395,7 +406,7 @@ def test_create_tool_unknown_category(client):
 
     get_response = client.get("/tools/")
     assert get_response.status_code == 200
-    assert get_response.json() == []
+    assert get_response.json()["items"] == []
 
 
 def test_update_tool_replace_categories(client):
@@ -466,7 +477,6 @@ def test_update_tool_null_categories(client):
     assert response.status_code == 422
 
 
-
 def test_delete_tool_removes_links(client):
     cat = client.post("/categories/", json={"name": "Temporary", "slug": "temp"}).json()
     tool_res = client.post(
@@ -497,7 +507,7 @@ def test_filter_tools_by_category(client):
 
     response = client.get("/tools/?category=automation")
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["items"]
     assert len(data) == 1
     assert data[0]["slug"] == "n8n"
 
@@ -505,7 +515,8 @@ def test_filter_tools_by_category(client):
 def test_filter_tools_by_unknown_category(client):
     response = client.get("/tools/?category=nonexistent")
     assert response.status_code == 200
-    assert response.json() == []
+    assert response.json()["items"] == []
+
 
 def test_get_category_by_slug_success(client):
     client.post("/categories/", json={"name": "Design", "slug": "design"})
@@ -516,10 +527,12 @@ def test_get_category_by_slug_success(client):
     assert data["name"] == "Design"
     assert data["slug"] == "design"
 
+
 def test_get_category_by_slug_not_found(client):
     response = client.get("/categories/nonexistent-category")
     assert response.status_code == 404
     assert response.json()["detail"] == "Category not found"
+
 
 def test_category_tools_success(client):
     cat = client.post("/categories/", json={"name": "DevOps", "slug": "devops"}).json()
@@ -530,9 +543,10 @@ def test_category_tools_success(client):
 
     response = client.get("/categories/devops/tools")
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["items"]
     assert len(data) == 1
     assert data[0]["name"] == "Docker"
+
 
 def test_category_tools_unknown_category(client):
     response = client.get("/categories/nonexistent-category/tools")
@@ -552,7 +566,7 @@ def test_category_tools_with_filters(client):
     )
     response = client.get("/categories/ai/tools?free_plan=true")
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["items"]
     assert len(data) == 1
     assert data[0]["slug"] == "chatgpt-free"
 
@@ -562,7 +576,7 @@ def test_category_with_no_tools(client):
 
     response = client.get("/categories/empty-cat/tools")
     assert response.status_code == 200
-    assert response.json() == []
+    assert response.json()["items"] == []
 
 
 def test_tool_in_two_categories_not_duplicated(client):
@@ -576,7 +590,7 @@ def test_tool_in_two_categories_not_duplicated(client):
 
     response = client.get("/tools/")
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["items"]
     
     matching_tools = [t for t in data if t["slug"] == "multicat-tool"]
     assert len(matching_tools) == 1
@@ -597,6 +611,7 @@ def test_create_feature_and_list(client):
     assert data[0]["name"] == "AI agents"
     assert data[1]["name"] == "Webhooks"
 
+
 def test_create_tool_with_unknown_feature_id(client):
     res = client.post(
         "/tools/",
@@ -605,7 +620,8 @@ def test_create_tool_with_unknown_feature_id(client):
     assert res.status_code == 404
     
     list_res = client.get("/tools/")
-    assert list_res.json() == []
+    assert list_res.json()["items"] == []
+
 
 def test_update_tool_features(client):
     f1 = client.post("/features/", json={"name": "Feature 1", "slug": "f1"}).json()
@@ -670,11 +686,11 @@ def test_filter_with_one_and_two_features(client):
 
     res_one = client.get("/tools/?feature=feat-a")
     assert res_one.status_code == 200
-    assert len(res_one.json()) == 2
+    assert len(res_one.json()["items"]) == 2
 
     res_two = client.get("/tools/?feature=feat-a&feature=feat-b")
     assert res_two.status_code == 200
-    data = res_two.json()
+    data = res_two.json()["items"]
     assert len(data) == 1
     assert data[0]["slug"] == "tool-both"
 
@@ -682,7 +698,7 @@ def test_filter_with_one_and_two_features(client):
 def test_filter_with_unknown_feature(client):
     res = client.get("/tools/?feature=unknown-feature")
     assert res.status_code == 200
-    assert res.json() == []
+    assert res.json()["items"] == []
 
 
 def test_tool_with_multiple_categories_and_features_returned_once(client):
@@ -703,7 +719,7 @@ def test_tool_with_multiple_categories_and_features_returned_once(client):
 
     res = client.get("/tools/")
     assert res.status_code == 200
-    data = res.json()
+    data = res.json()["items"]
     matching = [t for t in data if t["slug"] == "complex-tool"]
     assert len(matching) == 1
 
@@ -836,3 +852,61 @@ def test_plans_ordered_by_price(client):
     assert plans[0]["price"] == "0.00"
     assert plans[1]["price"] == "40.00"
     assert plans[2]["price"] == "100.00"
+
+
+def test_pagination_defaults_and_limits(client):
+    for i in range(25):
+        client.post("/tools/", json={"name": f"Tool {i:02d}", "slug": f"tool-{i}"})
+
+    res = client.get("/tools/")
+    assert res.status_code == 200
+    data = res.json()
+    assert len(data["items"]) == 20
+    assert data["total"] == 25
+
+    res_offset = client.get("/tools/?limit=10&offset=20")
+    assert res_offset.status_code == 200
+    data_offset = res_offset.json()
+    assert len(data_offset["items"]) == 5
+    assert data_offset["total"] == 25
+
+    res_beyond = client.get("/tools/?offset=200")
+    assert res_beyond.status_code == 200
+    data_beyond = res_beyond.json()
+    assert data_beyond["items"] == []
+    assert data_beyond["total"] == 25
+
+    assert client.get("/tools/?limit=0").status_code == 422
+    assert client.get("/tools/?limit=101").status_code == 422
+    assert client.get("/tools/?offset=-1").status_code == 422
+
+def test_sorting_and_stability(client):
+    client.post("/tools/", json={"name": "Alpha", "slug": "alpha-1"})
+    client.post("/tools/", json={"name": "Alpha", "slug": "alpha-2"})
+    client.post("/tools/", json={"name": "Beta", "slug": "beta"})
+
+    res_desc = client.get("/tools/?sort=-name")
+    assert res_desc.status_code == 200
+    items_desc = res_desc.json()["items"]
+    assert items_desc[0]["name"] == "Beta"
+
+    res_call1 = client.get("/tools/?sort=name")
+    res_call2 = client.get("/tools/?sort=name")
+    assert res_call1.json()["items"] == res_call2.json()["items"]
+
+
+def test_filters_and_pricing_count(client):
+    t1 = client.post("/tools/", json={"name": "Tool One", "slug": "t1"}).json()
+    client.post(f"/tools/{t1['id']}/pricing-plans", json={"name": "Free", "price": "0.00"})
+    client.post(f"/tools/{t1['id']}/pricing-plans", json={"name": "Standard", "price": "10.00"})
+    client.post(f"/tools/{t1['id']}/pricing-plans", json={"name": "Pro", "price": "50.00"})
+
+    t2 = client.post("/tools/", json={"name": "Tool Two", "slug": "t2"}).json()
+    client.post(f"/tools/{t2['id']}/pricing-plans", json={"name": "Expensive", "price": "100.00"})
+
+    res = client.get("/tools/?max_price=20.00")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["total"] == 1
+    assert len(data["items"]) == 1
+    assert data["items"][0]["name"] == "Tool One"

@@ -1,4 +1,5 @@
 from datetime import datetime, UTC
+from decimal import Decimal
 from typing import TYPE_CHECKING
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Numeric, Boolean, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -12,17 +13,17 @@ class PricingPlan(Base):
     __tablename__ = 'pricing_plans'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    tool_id: Mapped[int] = mapped_column(ForeignKey('tools.id', ondelete='CASCADE'), nullable=False)
+    tool_id: Mapped[int] = mapped_column(ForeignKey('tools.id', ondelete='CASCADE'), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
-    price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=True)
-    billing_period: Mapped[str] = mapped_column(String(20), nullable=True)
+    price: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    billing_period: Mapped[str | None] = mapped_column(String(20), nullable=True)
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="USD")
     is_free: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    description: Mapped[str] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         nullable=False
     )
 
-    tool = relationship("Tool", back_populates="pricing_plans")
+    tool: Mapped["Tool"] = relationship("Tool", back_populates="pricing_plans")

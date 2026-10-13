@@ -1,10 +1,11 @@
-from typing import Annotated
+from typing import Annotated, Literal
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.schemas.tool import ToolCreate, ToolRead, ToolUpdate
+from app.schemas.tool import ToolCreate, ToolRead, ToolUpdate, ToolList
 from app.services.tool_service import (
     create_tool,
     get_tools, 
@@ -19,7 +20,7 @@ router = APIRouter(prefix="/tools", tags=["tools"])
 def create_tool_endpoint(db: Annotated[Session, Depends(get_db)], data: ToolCreate):
     return create_tool(db, data)
 
-@router.get("/", response_model=list[ToolRead])
+@router.get("/", response_model=ToolList)
 def get_tools_endpoint(
     db: Annotated[Session, Depends(get_db)], 
     search: str | None = None,
@@ -27,7 +28,11 @@ def get_tools_endpoint(
     api_available: bool | None = None,
     pricing_model: str | None = None,
     category: str | None = None,
-    feature: list[str] | None = Query(default=None)
+    feature: list[str] | None = Query(default=None),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    sort: Literal["name", "-name", "newest"] = "name",
+    max_price: Decimal | None = Query(default=None, ge=0)
 ) -> list[ToolRead]:
     return get_tools(
         db=db, 
@@ -36,7 +41,11 @@ def get_tools_endpoint(
         api_available=api_available,
         pricing_model=pricing_model,
         category=category,
-        feature=feature
+        feature=feature,
+        limit=limit,
+        offset=offset,
+        sort=sort,
+        max_price=max_price
     )
 
 @router.get("/{slug}", response_model=ToolRead)

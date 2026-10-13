@@ -26,11 +26,19 @@ class Tool(Base):
     has_free_plan: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     api_available: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    categories: Mapped[list["Category"]] = relationship("Category", secondary=tool_categories, back_populates="tools")
+    categories: Mapped[list["Category"]] = relationship(
+        "Category",
+        secondary=tool_categories,
+        back_populates="tools"
+    )
 
-    features = relationship("Feature", secondary=tool_features, back_populates="tools")
+    features: Mapped[list["Feature"]] = relationship(
+        "Feature",
+        secondary=tool_features,
+        back_populates="tools"
+    )
 
-    pricing_plans = relationship(
+    pricing_plans: Mapped[list["PricingPlan"]] = relationship(
         "PricingPlan", 
         back_populates="tool", 
         cascade="all, delete-orphan", 

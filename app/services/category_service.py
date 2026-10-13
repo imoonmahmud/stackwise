@@ -22,7 +22,7 @@ def create_category(db: Session, category_in: CategoryCreate):
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Category with this name or slugh already exists"
+            detail="Category with this name or slug already exists"
         )
 
     db_category = Category(**category_in.model_dump())

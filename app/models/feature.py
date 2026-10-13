@@ -1,6 +1,6 @@
 from datetime import datetime, UTC
 from typing import TYPE_CHECKING
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Table, func
+from sqlalchemy import DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
