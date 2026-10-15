@@ -10,6 +10,7 @@ from app.schemas.tool import ToolCreate, ToolUpdate
 from app.models.category import Category
 from app.models.feature import Feature
 from app.models.pricing_plan import PricingPlan
+from app.models.saved_tool import saved_tools
 
 def _get_categories_or_404(db: Session, category_id: list[int]):
     unique_ids = set(category_id)
@@ -71,7 +72,8 @@ def get_tools(
     limit: int = 20,
     offset: int = 0,
     sort: Literal['name', '-name', 'newest'] = 'name',
-    max_price: Decimal | None = None
+    max_price: Decimal | None = None,
+    saved_by_user_id: int | None = None
 ) -> dict:
     query = select(Tool).options(
         selectinload(Tool.categories),
@@ -100,6 +102,13 @@ def get_tools(
             query = query.where(Tool.features.any(Feature.slug == slug))
     if max_price is not None:
         query = query.where(Tool.pricing_plans.any(PricingPlan.price <= max_price))
+
+    if saved_by_user_id is not None:
+        query = query.where(
+            Tool.id.in_(
+                select(saved_tools.c.tool_id).where(saved_tools.c.user_id == saved_by_user_id)
+            )
+        )
 
     total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
 

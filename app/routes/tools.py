@@ -5,8 +5,10 @@ from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.models.user import User
 from app.schemas.tool import ToolCreate, ToolRead, ToolUpdate, ToolList
-from app.core.dependencies import require_role
+from app.core.dependencies import require_role, get_current_user
+from app.services.saved_tool_service import save_tool, unsave_tool
 from app.services.tool_service import (
     create_tool,
     get_tools, 
@@ -16,6 +18,25 @@ from app.services.tool_service import (
 )
 
 router = APIRouter(prefix="/tools", tags=["tools"])
+
+@router.post("/{tool_id}/save", status_code=status.HTTP_204_NO_CONTENT)
+def bookmark_tool(
+    tool_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    save_tool(db, current_user, tool_id)
+    return None
+
+
+@router.delete("/{tool_id}/save", status_code=status.HTTP_204_NO_CONTENT)
+def unbookmark_tool(
+    tool_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    unsave_tool(db, current_user, tool_id)
+    return None
 
 @router.post(
     "/", 
@@ -39,7 +60,7 @@ def get_tools_endpoint(
     offset: int = Query(default=0, ge=0),
     sort: Literal["name", "-name", "newest"] = "name",
     max_price: Decimal | None = Query(default=None, ge=0)
-) -> list[ToolRead]:
+):
     return get_tools(
         db=db, 
         search=search,

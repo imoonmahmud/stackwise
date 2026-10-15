@@ -9,3 +9,4 @@ from app.models.tool_feature import tool_features
 from app.models.comparison import Comparison
 from app.models.comparison_tool import ComparisonTool
 from app.models.user import User
+from app.models.saved_tool import saved_tools
