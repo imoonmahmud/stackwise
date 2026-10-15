@@ -44,6 +44,7 @@ class Tool(Base):
         cascade="all, delete-orphan", 
         order_by=PricingPlan.price
     )
+    website_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
 
 

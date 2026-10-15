@@ -8,6 +8,7 @@ from app.routes import pricing_plans
 from app.routes import solution
 from app.routes import comparisons
 from app.routes import auth
+from app.routes import submission
 
 
 app = FastAPI()
@@ -23,6 +24,7 @@ app.include_router(pricing_plans.router)
 app.include_router(solution.router)
 app.include_router(comparisons.router)
 app.include_router(auth.router)
+app.include_router(submission.router)
 
 
 

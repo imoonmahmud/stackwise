@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, HttpUrl, Field, field_validator
 from typing import Any
 
 from app.schemas.category import CategoryRead
@@ -15,6 +15,7 @@ class ToolCreate(BaseModel):
     api_available: bool = False
     category_ids: list[int] = Field(default_factory=list)
     feature_ids: list[int] = Field(default_factory=list)
+    website_url: HttpUrl | None = None
 
 
 class ToolRead(BaseModel):
@@ -29,7 +30,8 @@ class ToolRead(BaseModel):
     categories: list[CategoryRead] = []
     features: list[FeatureRead] = []
     pricing_plans: list[PlanRead] = []
-
+    website_url: str | None = None
+    
     model_config = ConfigDict(from_attributes=True)
 
 class ToolUpdate(BaseModel):
