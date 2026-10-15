@@ -9,6 +9,7 @@ from app.routes import solution
 from app.routes import comparisons
 from app.routes import auth
 from app.routes import submission
+from app.routes import affiliate
 
 
 app = FastAPI()
@@ -25,6 +26,8 @@ app.include_router(solution.router)
 app.include_router(comparisons.router)
 app.include_router(auth.router)
 app.include_router(submission.router)
+app.include_router(affiliate.router)
+app.include_router(affiliate.admin_router)
 
 
 

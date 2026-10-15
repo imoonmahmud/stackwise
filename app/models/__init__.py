@@ -11,3 +11,5 @@ from app.models.comparison_tool import ComparisonTool
 from app.models.user import User
 from app.models.saved_tool import saved_tools
 from app.models.tool_submission import ToolSubmission
+from app.models.affiliate_click import AffiliateClick
+from app.models.affiliate_link import AffiliateLink
