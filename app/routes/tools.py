@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.schemas.tool import ToolCreate, ToolRead, ToolUpdate, ToolList
+from app.core.dependencies import require_role
 from app.services.tool_service import (
     create_tool,
     get_tools, 
@@ -16,7 +17,12 @@ from app.services.tool_service import (
 
 router = APIRouter(prefix="/tools", tags=["tools"])
 
-@router.post("/", response_model=ToolRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", 
+    response_model=ToolRead, 
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_role("editor", "admin"))]
+)
 def create_tool_endpoint(db: Annotated[Session, Depends(get_db)], data: ToolCreate):
     return create_tool(db, data)
 
@@ -52,10 +58,18 @@ def get_tools_endpoint(
 def get_tool_by_slug_endpoint(slug: str, db: Annotated[Session, Depends(get_db)]):
     return get_tool_by_slug(db=db, slug=slug)
 
-@router.patch("/{tool_id}", response_model=ToolRead)
+@router.patch(
+    "/{tool_id}", 
+    response_model=ToolRead,
+    dependencies=[Depends(require_role("editor", "admin"))]
+)
 def update_tool_endpoint(db: Annotated[Session, Depends(get_db)], tool_id: int, data: ToolUpdate):
     return update_tool(db, tool_id, data)
 
-@router.delete("/{tool_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{tool_id}", 
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_role("editor", "admin"))]
+)
 def delete_tool_endpoint(db: Annotated[Session, Depends(get_db)], tool_id: int):
     return delete_tool(db, tool_id)

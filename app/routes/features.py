@@ -5,10 +5,16 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.feature import FeatureCreate, FeatureRead
 from app.services.feature_service import create_feature, get_features, get_feature_by_slug
+from app.core.dependencies import require_role
 
 router = APIRouter(prefix="/features", tags=["features"])
 
-@router.post("/", response_model=FeatureRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", 
+    response_model=FeatureRead, 
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_role("editor", "admin"))]
+)
 def create_new_feature(feature_in: FeatureCreate, db: Annotated[Session, Depends(get_db)]):
     return create_feature(db, feature_in)
 

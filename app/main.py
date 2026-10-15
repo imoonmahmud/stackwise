@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes import tools
 from app.routes import categories
@@ -6,7 +7,8 @@ from app.routes import features
 from app.routes import pricing_plans
 from app.routes import solution
 from app.routes import comparisons
-from fastapi.middleware.cors import CORSMiddleware
+from app.routes import auth
+
 
 app = FastAPI()
 
@@ -20,6 +22,7 @@ app.include_router(features.router)
 app.include_router(pricing_plans.router)
 app.include_router(solution.router)
 app.include_router(comparisons.router)
+app.include_router(auth.router)
 
 
 

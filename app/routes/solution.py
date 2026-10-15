@@ -1,8 +1,10 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
+from app.core.dependencies import require_role
 from app.database import get_db
 from app.schemas.solution import SolutionCreate, SolutionListItem, SolutionRead, SolutionUpdate
+
 from app.services.solution_service import (
     create_solution,
     delete_solution,
@@ -17,7 +19,12 @@ router = APIRouter(prefix="/solutions", tags=["solutions"])
 def read_solutions(db: Annotated[Session, Depends(get_db)]):
     return get_solutions(db)
 
-@router.post("/", response_model=SolutionRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=SolutionRead, 
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_role("editor", "admin"))]
+)
 def create_new_solution(solution_in: SolutionCreate, db: Annotated[Session, Depends(get_db)]):
     return create_solution(db, solution_in)
 
@@ -25,11 +32,19 @@ def create_new_solution(solution_in: SolutionCreate, db: Annotated[Session, Depe
 def read_solution(slug: str, db: Annotated[Session, Depends(get_db)]):
     return get_solution_by_slug(db, slug)
 
-@router.patch("/{solution_id}", response_model=SolutionRead)
+@router.patch(
+    "/{solution_id}", 
+    response_model=SolutionRead,
+    dependencies=[Depends(require_role("editor", "admin"))]
+)
 def patch_solution(solution_id: int, solution_in: SolutionUpdate, db: Annotated[Session, Depends(get_db)]):
     return update_solution(db, solution_id, solution_in)
 
-@router.delete("/{solution_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{solution_id}", 
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_role("editor", "admin"))]
+)
 def remove_solution(solution_id: int, db: Annotated[Session, Depends(get_db)]):
     delete_solution(db, solution_id)
     return None

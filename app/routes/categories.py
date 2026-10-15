@@ -8,6 +8,7 @@ from app.schemas.category import CategoryCreate, CategoryRead
 from app.schemas.tool import ToolList
 from app.services.category_service import create_category, get_categories, get_category_by_slug
 from app.services.tool_service import get_tools
+from app.core.dependencies import require_role
 
 router = APIRouter(prefix="/categories", tags=["categories"])
 
@@ -15,7 +16,12 @@ router = APIRouter(prefix="/categories", tags=["categories"])
 def list_categories_endpoint(db: Annotated[Session, Depends(get_db)]):
     return get_categories(db)
 
-@router.post('/', response_model=CategoryRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    '/', 
+    response_model=CategoryRead, 
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_role("editor", "admin"))]
+)
 def create_category_endpoint(
     category_in: CategoryCreate, db: Annotated[Session, Depends(get_db)]
 ):
